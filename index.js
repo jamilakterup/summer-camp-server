@@ -30,11 +30,28 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const userCollection = client.db("summerDb").collection("menu");
+        const cartCollection = client.db("summerDb").collection("cart");
 
+
+        // all menu items
         app.get('/menu', async (req, res) => {
             const result = await userCollection.find({}).toArray();
             res.send(result);
         })
+
+
+        // cart collection
+        app.post('/carts', async (req, res) => {
+            const item = req.body;
+            const result = await cartCollection.insertOne(item);
+            res.send(result);
+        });
+
+        app.get('/carts', async (req, res) => {
+            const result = await cartCollection.find().toArray();
+            res.send(result);
+        });
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ping: 1});
