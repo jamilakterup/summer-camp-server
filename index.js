@@ -29,13 +29,38 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
-        const userCollection = client.db("summerDb").collection("menu");
+        const menuCollection = client.db("summerDb").collection("menu");
         const cartCollection = client.db("summerDb").collection("cart");
+        const usersCollection = client.db("summerDb").collection("users");
 
+
+        // all users related apis
+        app.get('/users', async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const query = {email: user.email}
+            const existingUsers = await usersCollection.findOne(query);
+            if (existingUsers) {
+                return res.send({message: "users already exist"})
+            }
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        })
+
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)}
+            const result = await usersCollection.deleteOne(query);
+            res.send(result);
+        })
 
         // all menu items
         app.get('/menu', async (req, res) => {
-            const result = await userCollection.find({}).toArray();
+            const result = await menuCollection.find().toArray();
             res.send(result);
         })
 
