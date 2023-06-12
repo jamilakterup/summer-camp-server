@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
-const {MongoClient, ServerApiVersion} = require('mongodb');
+const {MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -48,7 +48,19 @@ async function run() {
         });
 
         app.get('/carts', async (req, res) => {
-            const result = await cartCollection.find().toArray();
+            const email = req.query.email;
+            if (!email) {
+                res.sendStatus([])
+            }
+            const query = {email: email}
+            const result = await cartCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.delete('/carts/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)};
+            const result = await cartCollection.deleteOne(query);
             res.send(result);
         });
 
