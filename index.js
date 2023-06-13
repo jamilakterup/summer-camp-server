@@ -26,6 +26,22 @@ app.use(express.json());
 //         next();
 //     })
 // }
+// const verifyJWT = (req, res, next) => {
+//     const authorization = req.headers.authorization;
+//     if (!authorization) {
+//         return res.status(401).send({error: true, message: 'unauthorized access'});
+//     }
+//     // bearer token
+//     const token = authorization.split(' ')[1];
+
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+//         if (err) {
+//             return res.status(401).send({error: true, message: 'unauthorized access'})
+//         }
+//         req.decoded = decoded;
+//         next();
+//     })
+// }
 
 const uri = 'mongodb://0.0.0.0:27017'
 
@@ -83,6 +99,21 @@ async function run() {
         })
 
 
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = {email: email}
+            const user = await usersCollection.findOne(query);
+            if (user?.role === 'admin') {
+                res.send('admin')
+            } else if (user?.role === 'instructor') {
+                res.send('instructor')
+            } else {
+                res.send('student')
+            }
+        })
+
+
+
         app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
             const role = req.body.role;
@@ -110,21 +141,41 @@ async function run() {
             res.send(result);
         });
 
+
+        // app.get('/carts', verifyJWT, async (req, res) => {
+        //     const email = req.query.email;
+        //     if (!email) {
+        //         return res.send([])
+        //     }
+
+        //     const decodedEmail = req.decoded.email;
+        //     if (email !== decodedEmail) {
+        //         return res.status(401).send({error: true, message: 'forbidden access token'})
+        //     };
+
+        //     const query = {email: email}
+        //     const result = await cartCollection.find(query).toArray();
+        //     res.send(result);
+        // });
+
         app.get('/carts', async (req, res) => {
             const email = req.query.email;
+
             if (!email) {
-                res.send([])
+                res.send([]);
             }
 
             // const decodedEmail = req.decoded.email;
             // if (email !== decodedEmail) {
-            //     res.status(401).send({error: true, message: 'forbidden access token'})
-            // };
+            //     return res.status(403).send({error: true, message: 'forbidden access'})
+            // }
 
-            const query = {email: email}
+            const query = {email: email};
             const result = await cartCollection.find(query).toArray();
             res.send(result);
         });
+
+
 
         app.delete('/carts/:id', async (req, res) => {
             const id = req.params.id;
