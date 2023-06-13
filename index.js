@@ -10,6 +10,23 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// verify jwt
+// const verifyJWT = (req, res, next) => {
+//     const authorization = req.headers.authorization;
+//     if (!authorization) {
+//         return res.status(401).send({error: true, message: 'unauthorized access'})
+//     }
+
+//     const token = authorization.split(' ')[1];
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+//         if (err) {
+//             res.status(500).send({error: true, message: 'verification failed'})
+//         }
+//         req.decoded = decoded;
+//         next();
+//     })
+// }
+
 const uri = 'mongodb://0.0.0.0:27017'
 
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.n1furk6.mongodb.net/?retryWrites=true&w=majority`;
@@ -34,6 +51,12 @@ async function run() {
         const cartCollection = client.db("summerDb").collection("cart");
         const usersCollection = client.db("summerDb").collection("users");
 
+        // jwt token
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
+            res.send({token});
+        })
 
         // all users related apis
         app.get('/users', async (req, res) => {
@@ -90,8 +113,14 @@ async function run() {
         app.get('/carts', async (req, res) => {
             const email = req.query.email;
             if (!email) {
-                res.sendStatus([])
+                res.send([])
             }
+
+            // const decodedEmail = req.decoded.email;
+            // if (email !== decodedEmail) {
+            //     res.status(401).send({error: true, message: 'forbidden access token'})
+            // };
+
             const query = {email: email}
             const result = await cartCollection.find(query).toArray();
             res.send(result);
