@@ -105,7 +105,7 @@ async function run() {
             res.send(result);
         })
 
-        app.delete('/users/:id', async (req, res) => {
+        app.delete('/users/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = {_id: new ObjectId(id)}
             const result = await usersCollection.deleteOne(query);
@@ -144,6 +144,13 @@ async function run() {
         // all menu items
         app.get('/menu', async (req, res) => {
             const result = await menuCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.get('/menu/:email', verifyJWT, verifyInstructor, async (req, res) => {
+            const email = req.params.email;
+            const query = {instructorEmail: email}
+            const result = await menuCollection.find(query).toArray();
             res.send(result);
         })
 
