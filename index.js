@@ -224,7 +224,27 @@ async function run() {
         app.post('/payments', verifyJWT, async (req, res) => {
             const payment = req.body;
             const result = await paymentsCollection.insertOne(payment);
-            res.send(result);
+            const query = {_id: new ObjectId(payment.itemId)};
+            // const updateField = {$inc: {students: 1}};
+
+            const deleteResult = await cartCollection.deleteOne(query);
+            // const updateResult = await menuCollection.updateOne(query, updateField);
+            res.send({result, deleteResult, updateResult});
+        })
+
+
+        app.get('/admin-stats', verifyJWT, verifyAdmin, async (req, res) => {
+            const users = await usersCollection.estimatedDocumentCount();
+            const totalClass = await menuCollection.estimatedDocumentCount();
+            const parchesClass = await paymentsCollection.estimatedDocumentCount();
+            const payments = await paymentsCollection.find().toArray();
+            const revenue = payments.reduce((sum, payment) => sum + payment.price, 0)
+            res.send({
+                users,
+                revenue,
+                totalClass,
+                parchesClass
+            })
         })
 
 
