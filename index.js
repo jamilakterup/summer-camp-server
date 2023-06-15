@@ -4,6 +4,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const {MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -53,6 +54,7 @@ async function run() {
         const menuCollection = client.db("summerDb").collection("menu");
         const cartCollection = client.db("summerDb").collection("cart");
         const usersCollection = client.db("summerDb").collection("users");
+        const paymentsCollection = client.db("summerDb").collection("payments");
 
 
 
@@ -187,12 +189,43 @@ async function run() {
 
 
 
+        app.get('/carts/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)};
+            const result = await cartCollection.findOne(query);
+            res.send(result);
+        });
+
+
         app.delete('/carts/:id', async (req, res) => {
             const id = req.params.id;
             const query = {_id: new ObjectId(id)};
             const result = await cartCollection.deleteOne(query);
             res.send(result);
         });
+
+
+        // payment action
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const {price} = req.body;
+            const amount = parseFloat(price * 100);
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
+
+
+        // payment request
+        app.post('/payments', verifyJWT, async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            res.send(result);
+        })
 
 
         // Send a ping to confirm a successful connection
