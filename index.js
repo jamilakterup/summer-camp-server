@@ -232,6 +232,13 @@ async function run() {
             res.send({result, deleteResult, updateResult});
         })
 
+        app.get('/payments/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            query = {email: email}
+            const result = await paymentsCollection.find(query).toArray();
+            res.send(result);
+        })
+
 
         app.get('/admin-stats', verifyJWT, verifyAdmin, async (req, res) => {
             const users = await usersCollection.estimatedDocumentCount();
@@ -246,10 +253,15 @@ async function run() {
                 parchesClass
             })
         })
-
-        app.get('/order-stats', async (req, res) => {
-
+        app.get('/instructor-stats', verifyJWT, verifyInstructor, async (req, res) => {
+            const parchesClass = await paymentsCollection.estimatedDocumentCount();
+            const payments = await paymentsCollection.find().toArray();
+            res.send({
+                payments,
+                parchesClass
+            })
         })
+
 
 
         // Send a ping to confirm a successful connection
