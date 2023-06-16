@@ -247,6 +247,10 @@ async function run() {
             })
         })
 
+        app.get('/order-stats', async (req, res) => {
+
+        })
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ping: 1});
